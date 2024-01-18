@@ -1,7 +1,6 @@
-import { JSONSchema7Definition } from "json-schema";
-import { JSONSchemaExtended, JsonSchema, Refs } from "../Types";
-import { parseSchema } from "./parseSchema";
-import { parseOneOf } from "./parseOneOf";
+import { JSONSchemaExtended, JsonSchema, Refs } from "../Types.js";
+import { parseSchema } from "./parseSchema.js";
+import { parseOneOf } from "./parseOneOf.js";
 
 export const parseDiscriminator = (
   schema: JSONSchemaExtended & { oneOf: JsonSchema[] },
