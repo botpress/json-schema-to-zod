@@ -1,11 +1,9 @@
-import { JSONSchema7 } from "json-schema";
-import { Options } from "./Types";
-import { parseSchema } from "./parsers/parseSchema";
-import { format } from "./utils/format";
+import { Options, JsonSchema } from "./Types.js";
+import { parseSchema } from "./parsers/parseSchema.js";
 
 export const jsonSchemaToZod = (
-  schema: JSONSchema7,
-  { module = true, name, ...rest }: Options = {}
+  schema: JsonSchema,
+  { module, name, ...rest }: Options = {},
 ): string => {
   let result = parseSchema(schema, {
     module,
@@ -15,25 +13,19 @@ export const jsonSchemaToZod = (
     ...rest,
   });
 
-  if (module) {
-    if (module === "cjs") {
-      result = `
-        const { z } = require('zod')
+  if (module === "cjs") {
+    result = `const { z } = require("zod")
 
-        module.exports = ${
-          name ? `{ ${JSON.stringify(name)}: ${result} }` : result
-        }
-      `;
-    } else {
-      result = `
-        import { z } from 'zod'
+module.exports = ${name ? `{ ${JSON.stringify(name)}: ${result} }` : result}
+`;
+  } else if (module === "esm") {
+    result = `import { z } from "zod"
 
-        export ${name ? `const ${name} =` : `default`} ${result}
-      `;
-    }
-  } else {
-    result = `const ${name || "schema"} = ${result}`;
+export ${name ? `const ${name} =` : `default`} ${result}
+`;
+  } else if (name) {
+    result = `const ${name} = ${result}`;
   }
 
-  return format(result);
+  return result;
 };
