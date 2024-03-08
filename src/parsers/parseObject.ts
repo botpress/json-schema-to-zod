@@ -1,43 +1,49 @@
-import { JSONSchema7Extended, Refs } from "../Types";
-import { parseAnyOf } from "./parseAnyOf";
-import { parseOneOf } from "./parseOneOf";
-import { its, parseSchema } from "./parseSchema";
-import { parseAllOf } from "./parseAllOf";
+import { Discriminator, JsonSchemaObject, Refs } from "../Types.js";
+import { parseAnyOf } from "./parseAnyOf.js";
+import { parseOneOf } from "./parseOneOf.js";
+import { its, parseSchema } from "./parseSchema.js";
+import { parseAllOf } from "./parseAllOf.js";
 
 export function parseObject(
-  objectSchema: JSONSchema7Extended & { type: "object" },
+  objectSchema: JsonSchemaObject & { type: "object" } & Discriminator,
   refs: Refs
 ): string {
   let properties: string | undefined = undefined;
 
   if (objectSchema.properties) {
-    properties = "z.object({";
+    if (!Object.keys(objectSchema.properties).length) {
+      properties = "z.object({})";
+    } else {
+      properties = "z.object({ ";
 
-    properties += Object.keys(objectSchema.properties)
-      .map((key) => {
-        const propSchema = objectSchema.properties![key];
+      properties += Object.keys(objectSchema.properties)
+        .map((key) => {
+          const propSchema = objectSchema.properties![key];
 
-        const result = `${JSON.stringify(key)}:${parseSchema(propSchema, {
-          ...refs,
-          path: [...refs.path, "properties", key],
-        })}`;
+          const result = `${JSON.stringify(key)}: ${parseSchema(propSchema, {
+            ...refs,
+            path: [...refs.path, "properties", key],
+          })}`;
 
-        const hasDefault =
-          (typeof propSchema === "object" &&
-            propSchema.default !== undefined) ||
-          (typeof objectSchema.default === "object" &&
-            objectSchema.default !== null &&
-            key in objectSchema.default);
+          const hasDefault =
+            (typeof propSchema === "object" &&
+              propSchema.default !== undefined) ||
+            (typeof objectSchema.default === "object" &&
+              objectSchema.default !== null &&
+              key in objectSchema.default);
 
-        const required = objectSchema.required?.includes(key) ?? false;
+          const required = Array.isArray(objectSchema.required)
+            ? objectSchema.required.includes(key)
+            : typeof propSchema === "object" && propSchema.required === true;
 
-        const optional = !hasDefault && !required;
+          const optional = !hasDefault && !required;
 
-        return optional ? `${result}.optional()` : result;
-      })
-      .join(",");
+          return optional ? `${result}.optional()` : result;
+        })
+        .join(", ");
 
-    properties += "})";
+      properties += " })";
+    }
   }
 
   const additionalProperties =
@@ -70,11 +76,11 @@ export function parseObject(
         patternProperties += `.catchall(z.union([${[
           ...Object.values(parsedPatternProperties),
           additionalProperties,
-        ]}]))`;
+        ].join(", ")}]))`;
       } else if (Object.keys(parsedPatternProperties).length > 1) {
         patternProperties += `.catchall(z.union([${Object.values(
           parsedPatternProperties
-        )}]))`;
+        ).join(", ")}]))`;
       } else {
         patternProperties += `.catchall(${Object.values(
           parsedPatternProperties
@@ -85,11 +91,11 @@ export function parseObject(
         patternProperties += `z.record(z.union([${[
           ...Object.values(parsedPatternProperties),
           additionalProperties,
-        ]}]))`;
+        ].join(", ")}]))`;
       } else if (Object.keys(parsedPatternProperties).length > 1) {
         patternProperties += `z.record(z.union([${Object.values(
           parsedPatternProperties
-        )}]))`;
+        ).join(", ")}]))`;
       } else {
         patternProperties += `z.record(${Object.values(
           parsedPatternProperties
@@ -164,7 +170,9 @@ export function parseObject(
     ? patternProperties
       ? properties + patternProperties
       : additionalProperties
-      ? properties + `.catchall(${additionalProperties})`
+      ? additionalProperties === "z.never()"
+        ? properties + ".strict()"
+        : properties + `.catchall(${additionalProperties})`
       : properties
     : patternProperties
     ? patternProperties
@@ -182,7 +190,7 @@ export function parseObject(
           (x.properties || x.additionalProperties || x.patternProperties)
             ? { ...x, type: "object" }
             : x
-        ),
+        ) as any,
       },
       refs
     )})`;
@@ -198,7 +206,7 @@ export function parseObject(
           (x.properties || x.additionalProperties || x.patternProperties)
             ? { ...x, type: "object" }
             : x
-        ),
+        ) as any,
       },
       refs
     )})`;
@@ -214,7 +222,7 @@ export function parseObject(
           (x.properties || x.additionalProperties || x.patternProperties)
             ? { ...x, type: "object" }
             : x
-        ),
+        ) as any,
       },
       refs
     )})`;

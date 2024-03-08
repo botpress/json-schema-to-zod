@@ -1,14 +1,13 @@
-import { JSONSchema7 } from "json-schema";
-import { Refs } from "../Types";
-import { omit } from "../utils/omit";
-import { parseSchema } from "./parseSchema";
+import { JsonSchemaObject, Refs } from "../Types.js";
+import { omit } from "../utils/omit.js";
+import { parseSchema } from "./parseSchema.js";
 
 /**
  * For compatibility with open api 3.0 nullable
  */
 export const parseNullable = (
-  schema: JSONSchema7 & { nullable: true },
-  refs: Refs
+  schema: JsonSchemaObject & { nullable: true },
+  refs: Refs,
 ) => {
-  return `${parseSchema(omit(schema, "nullable"), refs)}.nullable()`;
+  return `${parseSchema(omit(schema, "nullable"), refs, true)}.nullable()`;
 };

@@ -1,10 +1,9 @@
-import { JSONSchema7, JSONSchema7Definition } from "json-schema";
-import { Refs } from "../Types";
-import { parseSchema } from "./parseSchema";
+import { JsonSchemaObject, JsonSchema, Refs } from "../Types.js";
+import { parseSchema } from "./parseSchema.js";
 
 export const parseAnyOf = (
-  schema: JSONSchema7 & { anyOf: JSONSchema7Definition[] },
-  refs: Refs
+  schema: JsonSchemaObject & { anyOf: JsonSchema[] },
+  refs: Refs,
 ) => {
   return schema.anyOf.length
     ? schema.anyOf.length === 1
@@ -12,8 +11,10 @@ export const parseAnyOf = (
           ...refs,
           path: [...refs.path, "anyOf", 0],
         })
-      : `z.union([${schema.anyOf.map((schema, i) =>
-          parseSchema(schema, { ...refs, path: [...refs.path, "anyOf", i] })
-        )}])`
+      : `z.union([${schema.anyOf
+          .map((schema, i) =>
+            parseSchema(schema, { ...refs, path: [...refs.path, "anyOf", i] }),
+          )
+          .join(", ")}])`
     : `z.any()`;
 };
