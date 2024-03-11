@@ -20,10 +20,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-      - run: npm --version
       - run: node --version
-      - run: npm run version
+      - run: npm --version
       - run: npm install --frozen-lockfile
+      - run: npm run version
       - run: npm run build
       - run: npm run type:check
       - run: npm run test
