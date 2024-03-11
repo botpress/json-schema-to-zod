@@ -1,4 +1,4 @@
-name: Publish
+name: Build, Test and Publish
 
 on:
   push:
@@ -17,11 +17,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
       - run: npm install --frozen-lockfile
       - run: npm run build
       - run: npm run type:check
       - run: npm run test
-      - name: Publish
+      - name: Publish on master
         if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         uses: botpress/gh-actions/publish-if-not-exists@master
         with:
