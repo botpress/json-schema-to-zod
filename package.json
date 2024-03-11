@@ -24,7 +24,8 @@
     "dry": "npm run build && npm pub --dry-run",
     "dev": "tsx watch test/index.ts",
     "gen": "tsx ./createIndex.ts",
-    "test": "tsx test/index.ts"
+    "test": "tsx test/index.ts",
+    "version": "tsx --version"
   },
   "keywords": [
     "zod",
